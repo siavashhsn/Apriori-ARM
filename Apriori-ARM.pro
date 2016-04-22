@@ -11,6 +11,7 @@ QT       -= gui
 TARGET = Apriori-ARM
 CONFIG   += console
 CONFIG   -= app_bundle
+CONFIG   += c++11
 
 TEMPLATE = app
 
