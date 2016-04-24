@@ -15,20 +15,52 @@ typedef unordered_map<string, int> u;
 typedef vector<unordered_map<string, int>> vu;
 typedef vector<pair<unordered_map<string, int>, size_t>> vpu;
 
+void print(vpu& v)
+{
+    string s;
+    for (size_t i = 0; i < v.size(); ++i) {
+        for(auto& j:v[i].first) {
+            s+=j.first + " - ";
+        }
+        s.pop_back();
+        s.pop_back();
+        cout << s << "--> " << v[i].second << endl;
+        s="";
+    }
+    cout << endl;
+}
+
+
 void candid_gen(vpu& v, vpu& ans)
 {
     size_t count=v[0].first.size() + 1;
     u m,mm;
     for (size_t i = 0; i < v.size() - 1; ++i) {
-        for(auto& k:v[i].first)
-            mm[k.first]++;
+        mm = v[i].first;
+
         for (size_t j = i + 1; j < v.size(); j++) {
             m.clear();
             m=mm;
-            for(auto& h:v[j].first)
+            for(auto& h:v[j].first) {
                 m[h.first]++;
-            if(m.size() == count)
-                ans.push_back(make_pair(m, 0));
+            }
+
+            if(m.size() == count){
+                size_t l=0,p=0;
+                for (size_t var = 0; var < ans.size(); ++var) {
+                    for(auto& w:m) {
+                        if(ans[var].first.count(w.first))
+                            l++;
+                    }
+                    if(l==m.size())
+                        p++;
+                    l=0;
+                }
+                if(p==0)
+                    ans.push_back(make_pair(m, 0));
+//                print(ans);
+                p=0;
+            }
         }
     }
 }
@@ -36,30 +68,44 @@ void candid_gen(vpu& v, vpu& ans)
 
 void sup_cal(vpu& v, vu& iv, size_t minsup, vpu& ans)
 {
+    u exist;
+    string s="";
     size_t c, cc, ccc;
     for (size_t i = 0; i < v.size(); ++i) {
         c=0; cc=0; ccc = v[i].first.size();
         for (size_t j = 0; j < iv.size(); ++j) {
-            for(auto& k:v[i].first)
-                if(iv[j].count(k.first))
+            s="";
+            for(auto& k:v[i].first) {
+                s+=";"+k.first;
+                if(iv[j].count(k.first)){
                     c++;
-            if(c==ccc)
+                }
+            }
+            if(c==ccc) {
                 cc++;
+            }
             c=0;
         }
-        if(cc >= minsup)
-            ans.push_back(make_pair(v[i].first, cc));
+        if(cc >= minsup) {
+            if(!exist.count(s))
+                ans.push_back(make_pair(v[i].first, cc));
+//            print(ans);
+            exist[s]++;
+            s="";
+        }
     }
 }
 
 
+
 int main()
 {
-    string location = "/home/siavash/Desktop/a.txt";
+    string location; // = "/home/siavash/Desktop/a.txt";
     size_t minsup = 2;
-//    cin >> location;
-//    cin >> minsup;
-//    cin >> minconf;
+    cout <<  "Data File Location : ";
+    cin >> location;
+    cout << "Minsup : ";
+    cin >> minsup;
 
     //read from file
     ifstream f(location.c_str());
@@ -91,23 +137,10 @@ int main()
         iv.push_back(m);
     }
 
-    for (size_t i = 0; i < iv.size(); i++) {
-        for (auto& k:iv[i]) {
-            cout << k.first << " ";
-        }
-        cout << endl;
-    }
-
-
     vector<string> temp;
     for(auto& i:candidate) {
-        cout<< i.first << "--" << i.second << endl;
         if((size_t)i.second >= minsup)
             temp.push_back(i.first);
-    }
-
-    for(auto& i:temp) {
-        cout << i << endl;
     }
 
     vpu candidate2;
@@ -121,40 +154,28 @@ int main()
         }    
     }
 
-
     vpu t_candid, a_candid;
-//    for (size_t i = 0; i < candidate2.size(); i++) {
-//        for (auto& k:candidate2[i].first) {
-//            cout << k.first << " ";
-//        }
-//        cout << endl;
-//    }
     sup_cal(candidate2, iv, minsup, t_candid);
 
-//    for (size_t i = 0; i < t_candid.size(); i++) {
-//        for (auto& k:t_candid[i].first) {
-//            cout << k.first << " ";
-//        }
-//        cout << endl;
-//    }
-
-
+    candidate2.clear();
+    candidate2 = t_candid;
 
     while(true) {
         t_candid.clear();
         a_candid.clear();
         candid_gen(candidate2, t_candid);
+
         if(t_candid.size()==0) break;
         sup_cal(t_candid, iv, minsup, a_candid);
-        candidate2 = a_candid;
+
+        if(a_candid.size() != 0)
+            candidate2 = a_candid;
+        else
+            break;
     }
 
-    for (size_t i = 0; i < candidate2.size(); ++i) {
-        for(auto& j:candidate2[i].first) {
-            cout << j.first << " - ";
-        }
-        cout << "-->" << candidate2[i].second << endl;
-    }
+    cout << endl << "Answer : " << endl;
+    print(candidate2);
 
     return 0;
 }
